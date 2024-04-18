@@ -22,7 +22,6 @@ self.addEventListener("install", async (ev) => {
 // activate sw
 self.addEventListener("activate", async (ev) => {
   const cachesKeysArray = await caches.keys();
-  console.log(cachesKeysArray);
   await Promise.all(
     cachesKeysArray
       .filter((k) => k !== staticCacheKey && k !== dynamicCacheKey)
@@ -41,7 +40,6 @@ async function cacheFirst(request) {
     return (
       cached ??
       (await fetch(request).then((response) => {
-        console.log("response", response);
         return networkFirst(request);
       }))
     );
@@ -51,7 +49,6 @@ async function cacheFirst(request) {
 }
 
 async function networkFirst(request) {
-  console.log("networkFirst");
   const cache = await caches.open(dynamicCacheKey);
   try {
     const response = await fetch(request);
