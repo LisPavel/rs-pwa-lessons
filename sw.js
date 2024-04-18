@@ -1,4 +1,4 @@
-const staticCacheKey = "static-site";
+const staticCacheKey = "static-site-v1";
 
 const ASSETS = [
   "/",
@@ -18,8 +18,14 @@ self.addEventListener("install", async (ev) => {
 });
 
 // activate sw
-self.addEventListener("activate", (ev) => {
-  console.log("service worker has been activated", ev);
+self.addEventListener("activate", async (ev) => {
+  const cachesKeysArray = await caches.keys();
+  console.log(cachesKeysArray);
+  await Promise.all(
+    cachesKeysArray
+      .filter((k) => k !== staticCacheKey)
+      .map((key) => caches.delete(key))
+  );
 });
 
 // fetch event
