@@ -9,6 +9,7 @@ const ASSETS = [
   "/js/ui.js",
   "/js/materialize.min.js",
   "https://fonts.googleapis.com/icon?family=Material+Icons",
+  "https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2",
 ];
 // install sw
 self.addEventListener("install", async (ev) => {
@@ -23,5 +24,9 @@ self.addEventListener("activate", (ev) => {
 
 // fetch event
 self.addEventListener("fetch", (ev) => {
-  console.log("fetch", ev.request.url);
+  ev.respondWith(
+    caches.match(ev.request).then((cache) => {
+      return cache || fetch(ev.request);
+    })
+  );
 });
