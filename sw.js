@@ -1,9 +1,10 @@
-const staticCacheKey = "static-site-v1";
-const dynamicCacheKey = "dynamic-site-v1";
+const staticCacheKey = "static-site-v2";
+const dynamicCacheKey = "dynamic-site-v2";
 
 const ASSETS = [
   "/",
   "/index.html",
+  "/offline.html",
   "/css/materialize.min.css",
   "/css/styles.css",
   "/js/app.js",
@@ -24,24 +25,40 @@ self.addEventListener("activate", async (ev) => {
   console.log(cachesKeysArray);
   await Promise.all(
     cachesKeysArray
-      .filter((k) => k !== staticCacheKey)
+      .filter((k) => k !== staticCacheKey && k !== dynamicCacheKey)
       .map((key) => caches.delete(key))
   );
 });
 
 // fetch event
 self.addEventListener("fetch", (ev) => {
-  ev.respondWith(
-    caches.match(ev.request).then((cache) => {
-      return (
-        cache ||
-        fetch(ev.request).then((response) => {
-          return caches.open(dynamicCacheKey).then((cache) => {
-            cache.put(ev.request, response.clone());
-            return response;
-          });
-        })
-      );
-    })
-  );
+  ev.respondWith(cacheFirst(ev.request));
 });
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  try {
+    return (
+      cached ??
+      (await fetch(request).then((response) => {
+        console.log("response", response);
+        return networkFirst(request);
+      }))
+    );
+  } catch (error) {
+    return networkFirst(request);
+  }
+}
+
+async function networkFirst(request) {
+  console.log("networkFirst");
+  const cache = await caches.open(dynamicCacheKey);
+  try {
+    const response = await fetch(request);
+    await cache.put(request, response.clone());
+    return response;
+  } catch (error) {
+    const cached = await cache.match(request);
+    return cached ?? (await caches.match("/offline.html"));
+  }
+}
