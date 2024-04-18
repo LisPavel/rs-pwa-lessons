@@ -1,4 +1,5 @@
 const staticCacheKey = "static-site-v1";
+const dynamicCacheKey = "dynamic-site-v1";
 
 const ASSETS = [
   "/",
@@ -32,7 +33,15 @@ self.addEventListener("activate", async (ev) => {
 self.addEventListener("fetch", (ev) => {
   ev.respondWith(
     caches.match(ev.request).then((cache) => {
-      return cache || fetch(ev.request);
+      return (
+        cache ||
+        fetch(ev.request).then((response) => {
+          return caches.open(dynamicCacheKey).then((cache) => {
+            cache.put(ev.request, response.clone());
+            return response;
+          });
+        })
+      );
     })
   );
 });
